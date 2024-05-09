@@ -1,9 +1,6 @@
 import web
 import json
 from wsgiref.simple_server import make_server
-import os
-import SimTyphoonForm
-import SimTyphoonLand
 
 urls = ('/TyphoonForm', 'TyphoonForm',
         '/TyphoonLand', 'TyphoonLand')

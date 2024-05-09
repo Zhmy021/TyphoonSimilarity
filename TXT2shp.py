@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import arcpy
 
-
 def remove_spaces_from_list(input_list):
     result_list = []
     for item in input_list:
