@@ -1,4 +1,3 @@
-# 'Maysak'
 from math import *
 
 
@@ -9,7 +8,6 @@ def typhoonForm(typhoonName):
     import numpy as np
 
     import pyproj
-
     def remove_spaces_from_list(input_list):
         result_list = []
         for item in input_list:
