@@ -1,42 +1,24 @@
-import web
-import json
-from wsgiref.simple_server import make_server
+import ShapeSimilarity.readtxtfile as rd
+from Typhoon import Typhoon
+import time
 
-urls = ('/TyphoonForm', 'TyphoonForm',
-        '/TyphoonLand', 'TyphoonLand')
-
-app = web.application(urls, globals())
-
-
-class TyphoonForm:
-
-    def POST(self):
-        try:
-            input_data = web.data()  # 获取原始请求数据
-            print(input_data)
-            json_data = json.loads(input_data)
-            value1 = json_data.get('value1')
-            value2 = json_data.get('value2')
-            print(value1)
-            if value1 is None or value2 is None:
-                raise ValueError("Both value1 and value2 must be provided.")
-
-            result_list = [value1, value2]
-            result = ', '.join(result_list)
-
-            response_data = {'result': result}
-            response_json = json.dumps(response_data)
-
-            web.header('Content-Type', 'application/json')
-            return response_json
-        except Exception as e:
-            error_message = {'error': f"An error occurred: {str(e)}"}
-            web.header('Content-Type', 'application/json')
-            return json.dumps(error_message)
+from tqdm import tqdm
+import time
 
 
 if __name__ == '__main__':
-    # 设置端口号
-    httpd = make_server('', 8070, app.wsgifunc())
-    httpd.serve_forever()
-    app.run()
+    data = rd.loadfile('C:/Users/zmyzq/Desktop/台风/CMABSTdata')
+    content = data.readTxtFile()
+    Typhoon_list = []
+
+    for i in range(len(content['Typhoon_Name'])):
+        tyhoon = Typhoon(content['Typhoon_Name'][i], content['Typhoon_time'][i], content['Typhoon_lat'][i],
+                         content['Typhoon_lon'][i], content['Typhoon_pres'][i], content['Typhoon_wnd'][i])
+        Typhoon_list.append(tyhoon)
+    D, S, C = [], [], []
+    for i in tqdm(range(len(Typhoon_list)), ncols=80):
+        shp = Typhoon_list[2].calculate_shape_similarity(Typhoon_list[i])
+        D.append(shp[0])
+        S.append(shp[1])
+        C.append(shp[2])
+    print("Progress completed.")
