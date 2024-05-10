@@ -4,13 +4,32 @@ from math import *
 
 
 class Typhoon:
-    def __init__(self, TypCrd_name, TypCrd_time, TypCrd_lat, TypCrd_lon, TypCrd_pres, TypCrd_wnd):
-        self.name = TypCrd_name
-        self.time = TypCrd_time
+    def __init__(self, TypCrd_name, TypCrd_time, TypCrd_lat, TypCrd_lon, TypCrd_pres, TypCrd_wnd, TypCrd_recTime):
+        self.TypCrd_name = TypCrd_name
+        self.TypCrd_time = TypCrd_time
         self.TypCrd_lat = TypCrd_lat
         self.TypCrd_lon = TypCrd_lon
         self.TypCrd_pres = TypCrd_pres
         self.TypCrd_wnd = TypCrd_wnd
+        self.TypCrd_recTime = TypCrd_recTime
+
+    def check_loadPoint(self):
+        from shapely.geometry import Point, Polygon
+        import geopandas as gpd
+
+        for i in range(len(self.TypCrd_lat)):
+            # 创建点对象
+            point = Point(self.TypCrd_lon[i] / 10, self.TypCrd_lat[i] / 10)
+            # 加载shp文件
+            shapefile = gpd.read_file('data/GSHHS/GSHHS_l_L1.shp')
+            # 判断点是否在面内
+            result = shapefile.contains(point)
+            if result[0]:
+                return i, self.TypCrd_recTime[i]
+            else:
+                continue
+
+        return None
 
     def calculate_shape_similarity(self, other_typhoon: 'Typhoon'):
         # 计算形状相似性

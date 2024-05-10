@@ -61,14 +61,15 @@ class loadfile:
                 Typhoon_wnd[item - 1].append(int(i[32:34]))
                 record += 1
         Typhoon_Name = self.remove_spaces_from_list(Typhoon_Name)
-        Typhoon_record_time = [i[0] for i in Typhoon_record_time]
+        Typhoon_time = [i[0] for i in Typhoon_record_time]
 
         return {"Typhoon_Name": Typhoon_Name,
-                "Typhoon_time": Typhoon_record_time,
+                "Typhoon_record_time": Typhoon_record_time,
                 "Typhoon_lat": Typhoon_coord_lat,
                 "Typhoon_lon": Typhoon_coord_long,
                 "Typhoon_pres": Typhoon_pres,
                 "Typhoon_wnd": Typhoon_wnd,
                 "Typhoon_grade": Typhoon_grade,
-                "Typhoon_record_num": Typhoon_record_num}
+                "Typhoon_record_num": Typhoon_record_num,
+                "Typhoon_time": Typhoon_time}
 

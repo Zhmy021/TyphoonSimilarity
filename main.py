@@ -13,8 +13,15 @@ if __name__ == '__main__':
 
     for i in range(len(content['Typhoon_Name'])):
         tyhoon = Typhoon(content['Typhoon_Name'][i], content['Typhoon_time'][i], content['Typhoon_lat'][i],
-                         content['Typhoon_lon'][i], content['Typhoon_pres'][i], content['Typhoon_wnd'][i])
+                         content['Typhoon_lon'][i], content['Typhoon_pres'][i], content['Typhoon_wnd'][i],
+                         content['Typhoon_record_time'][i])
         Typhoon_list.append(tyhoon)
+
+    K=-1
+    hi = Typhoon_list[K].check_loadPoint()
+    print(Typhoon_list[K].TypCrd_name)
+    print(hi)
+
     D, S, C = [], [], []
     for i in tqdm(range(len(Typhoon_list)), ncols=80):
         shp = Typhoon_list[2].calculate_shape_similarity(Typhoon_list[i])
