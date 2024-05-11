@@ -1,10 +1,12 @@
 import pyproj
 import math
 from math import *
+import numpy as np
 
 
 class Typhoon:
-    def __init__(self, TypCrd_name, TypCrd_time, TypCrd_lat, TypCrd_lon, TypCrd_pres, TypCrd_wnd, TypCrd_recTime):
+    def __init__(self, TypCrd_name, TypCrd_time, TypCrd_lat, TypCrd_lon, TypCrd_pres,
+                 TypCrd_wnd, TypCrd_recTime, TypCrd_grade, TypCrd_recGap):
         self.TypCrd_name = TypCrd_name
         self.TypCrd_time = TypCrd_time
         self.TypCrd_lat = TypCrd_lat
@@ -12,6 +14,13 @@ class Typhoon:
         self.TypCrd_pres = TypCrd_pres
         self.TypCrd_wnd = TypCrd_wnd
         self.TypCrd_recTime = TypCrd_recTime
+        self.TypCrd_grade = TypCrd_grade
+        self.TypCrd_recGap = TypCrd_recGap
+
+    @staticmethod
+    def normalize(lst, max_val, min_val):
+        normalized_lst = (lst - min_val) / (max_val - min_val)
+        return normalized_lst
 
     def check_loadPoint(self):
         from shapely.geometry import Point, Polygon
@@ -25,11 +34,10 @@ class Typhoon:
             # 判断点是否在面内
             result = shapefile.contains(point)
             if result[0]:
-                return i, self.TypCrd_recTime[i]
+                return i
             else:
                 continue
-
-        return None
+        return 0
 
     def calculate_shape_similarity(self, other_typhoon: 'Typhoon'):
         # 计算形状相似性
@@ -47,31 +55,65 @@ class Typhoon:
             otherCoord[0].append(x)
             otherCoord[1].append(y)
 
-        coord_X_combine.append(selfCoord[0][-8:])
-        coord_X_combine.append(otherCoord[0][-8:])
-        coord_Y_combine.append(selfCoord[1][-8:])
-        coord_Y_combine.append(otherCoord[1][-8:])
-        if len(coord_Y_combine[0]) == 8 and len(coord_Y_combine[1]) == 8:
-            for i in range(8):
+        coord_X_combine.append(selfCoord[0][-12:])
+        coord_X_combine.append(otherCoord[0][-12:])
+        coord_Y_combine.append(selfCoord[1][-12:])
+        coord_Y_combine.append(otherCoord[1][-12:])
+        if len(coord_Y_combine[0]) == len(coord_Y_combine[1]) == 12:
+            for i in range(12):
                 SUM_Y.append(math.fabs(coord_Y_combine[1][i] - coord_Y_combine[0][i]))  # 计算控制点纵坐标差
                 SUM_X.append(math.fabs(coord_X_combine[1][i] - coord_X_combine[0][i]))  # 计算控制点纵坐标差
-            for i in range(8):
+            for i in range(12):
                 D_ij += sqrt((SUM_Y[i] ** 2 + SUM_X[i] ** 2) / 8)
-            for i in range(8):
+            for i in range(12):
                 S_ij += (sqrt(SUM_Y[i] ** 2 + SUM_X[i] ** 2) - D_ij) / 8
             C_ij = 0.7 * D_ij + 0.3 * S_ij
             return [D_ij, S_ij, C_ij]
         else:
             return [0, 0, 0]
 
-    def calculate_impact_similarity(self, other_typhoon):
+    def calculate_impact_similarity(self, other_typhoon: 'Typhoon'):
         # 在这里编写计算影响相似性的代码
+        loadtime = self.check_loadPoint()
+        combine_pres, combine_wnd, combine_grade = [[], []], [[], []], [[], []]
+
+        combine_pres[0].append(self.TypCrd_pres[loadtime:])
+        combine_pres[1].append(other_typhoon.TypCrd_pres[loadtime:])
+
+        combine_wnd[0].append(self.TypCrd_wnd[loadtime:])
+        combine_wnd[1].append(other_typhoon.TypCrd_wnd[loadtime:])
+
+        combine_grade[0].append(self.TypCrd_grade[loadtime:])
+        combine_grade[1].append(other_typhoon.TypCrd_grade[loadtime:])
+
         similarity_score = ...
 
         return similarity_score
 
-    def calculate_attributes_similarity(self, other_typhoon):
+    def calculate_attributes_similarity(self, max_prwd, min_prwd, other_typhoon: 'Typhoon'):
+        from sklearn.decomposition import PCA
+        import numpy as np
         # 在这里编写计算属性相似性的代码
+        loadtime = self.check_loadPoint()
+
+        if len(self.TypCrd_pres[loadtime - 15:loadtime + 1]) == 16:
+            arra_list = np.array([self.normalize(self.TypCrd_pres[loadtime - 15:loadtime + 1], max_prwd[0], min_prwd[0]),
+                                  self.normalize(self.TypCrd_wnd[loadtime - 15:loadtime + 1],6, 0),
+                                  self.normalize(self.TypCrd_grade[loadtime - 15:loadtime + 1], max_prwd[1], min_prwd[1])])
+            pca = PCA(n_components=3)
+            # 执行PCA
+            pca.fit(arra_list.T)
+            # 获取降维后的数据
+            reduced_data = pca.transform(arra_list.T)
+            # 获取每个参数的权重
+            B = pca.components_
+            result = np.dot(np.array(reduced_data), np.array(weights))
+            row_sums = np.sum(result, axis=1, dtype=np.float64)
+            print(reduced_data)
+            print(row_sums)
+        else:
+            return 0
+
         similarity_score = ...
 
         return similarity_score
