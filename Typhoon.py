@@ -1,7 +1,10 @@
 import pyproj
 import math
 from math import *
+from sklearn.decomposition import PCA
 import numpy as np
+from shapely.geometry import Point, Polygon
+import geopandas as gpd
 
 
 class Typhoon:
@@ -19,13 +22,12 @@ class Typhoon:
 
     @staticmethod
     def normalize(lst, max_val, min_val):
+        print(lst, max_val, min_val)
         normalized_lst = (lst - min_val) / (max_val - min_val)
+
         return normalized_lst
 
     def check_loadPoint(self):
-        from shapely.geometry import Point, Polygon
-        import geopandas as gpd
-
         for i in range(len(self.TypCrd_lat)):
             # 创建点对象
             point = Point(self.TypCrd_lon[i] / 10, self.TypCrd_lat[i] / 10)
@@ -34,8 +36,12 @@ class Typhoon:
             # 判断点是否在面内
             result = shapefile.contains(point)
             if result[0]:
+                #print(f"该台风登陆时间为{self.TypCrd_recTime[i]}")
                 return i
             else:
+                if i == len(self.TypCrd_lat) - 1:
+                    # print("该台风未登陆")
+                    pass
                 continue
         return 0
 
@@ -91,15 +97,15 @@ class Typhoon:
         return similarity_score
 
     def calculate_attributes_similarity(self, max_prwd, min_prwd, other_typhoon: 'Typhoon'):
-        from sklearn.decomposition import PCA
-        import numpy as np
+
         # 在这里编写计算属性相似性的代码
         loadtime = self.check_loadPoint()
 
         if len(self.TypCrd_pres[loadtime - 15:loadtime + 1]) == 16:
-            arra_list = np.array([self.normalize(self.TypCrd_pres[loadtime - 15:loadtime + 1], max_prwd[0], min_prwd[0]),
-                                  self.normalize(self.TypCrd_wnd[loadtime - 15:loadtime + 1],6, 0),
-                                  self.normalize(self.TypCrd_grade[loadtime - 15:loadtime + 1], max_prwd[1], min_prwd[1])])
+            arra_list = np.array(
+                [self.normalize(self.TypCrd_pres[loadtime - 15:loadtime + 1], max_prwd[0], min_prwd[0]),
+                 self.normalize(self.TypCrd_wnd[loadtime - 15:loadtime + 1], max_prwd[1], min_prwd[1]),
+                 self.normalize(self.TypCrd_grade[loadtime - 15:loadtime + 1], 6, 0)])
             pca = PCA(n_components=3)
             # 执行PCA
             pca.fit(arra_list.T)
@@ -107,7 +113,7 @@ class Typhoon:
             reduced_data = pca.transform(arra_list.T)
             # 获取每个参数的权重
             B = pca.components_
-            result = np.dot(np.array(reduced_data), np.array(weights))
+            result = np.dot(np.array(reduced_data), np.array(B))
             row_sums = np.sum(result, axis=1, dtype=np.float64)
             print(reduced_data)
             print(row_sums)
